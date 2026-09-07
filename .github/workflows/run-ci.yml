@@ -81,7 +81,15 @@ jobs:
       - name: Pack npm tarball
         run: npm pack
 
+      # dependency-review-action only supports pull_request/pull_request_target/
+      # merge_group -- it needs a base and head ref, and errors out without one.
+      # Under racecar's workflow_dispatch it failed at step 12 of 16, after Lint,
+      # Build, unit tests, browser tests and npm pack had all passed, and took
+      # six downstream jobs (cjs/esm smoke, cjs/esm module, bun, deno) with it via
+      # `needs:`. Gating it to the PR context restores those; on a real PR it runs
+      # exactly as before.
       - name: Dependency Review
+        if: github.event.pull_request
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
 
       - name: Upload npm pack artifact
